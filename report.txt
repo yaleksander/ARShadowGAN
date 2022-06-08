@@ -1,0 +1,24 @@
+TensorFlow 2.0 Upgrade Script
+-----------------------------
+Converted 1 files
+Detected 0 issues that require attention
+--------------------------------------------------------------------------------
+================================================================================
+Detailed log follows:
+
+================================================================================
+================================================================================
+Input tree: 'test'
+================================================================================
+--------------------------------------------------------------------------------
+Processing file 'test\\test.py'
+ outputting to 'test_out\\test.py'
+--------------------------------------------------------------------------------
+
+40:13: INFO: Renamed 'tf.ConfigProto' to 'tf.compat.v1.ConfigProto'
+42:9: INFO: Renamed 'tf.Session' to 'tf.compat.v1.Session'
+44:13: INFO: Renamed 'tf.gfile.GFile' to 'tf.io.gfile.GFile'
+45:24: INFO: Renamed 'tf.GraphDef' to 'tf.compat.v1.GraphDef'
+50:17: INFO: Renamed 'tf.global_variables_initializer' to 'tf.compat.v1.global_variables_initializer'
+--------------------------------------------------------------------------------
+
