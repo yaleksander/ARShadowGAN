@@ -84,12 +84,16 @@ def test():
 			(score, diff) = compare_ssim(g1, g2, full=True)
 			diff = (diff * 255).astype("uint8")
 			print("SSIM for image {}: {}".format(i, score))
-			cv.fastNlMeansDenoising(diff, diff, 42)
+			#cv.fastNlMeansDenoising(diff, diff, 42)
 			cv.imwrite(os.path.join(output_dir, 'diff_' + i), diff)
 			ret, thresh = cv.threshold((255 - diff), 127.5, 255, 0)
 			M = cv.moments(thresh)
-			x = int(M["m10"] / M["m00"])
-			y = int(M["m01"] / M["m00"])
+			if (M["m00"] == 0):
+				x = int(M["m10"])
+				y = int(M["m01"])
+			else:
+				x = int(M["m10"] / M["m00"])
+				y = int(M["m01"] / M["m00"])
 			print(x, y)
 
 
