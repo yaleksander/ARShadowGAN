@@ -85,7 +85,9 @@ def test():
 			diff = (diff * 255).astype("uint8")
 			print("SSIM for image {}: {}".format(i, score))
 			#cv.fastNlMeansDenoising(diff, diff, 42)
-			cv.imwrite(os.path.join(output_dir, 'diff_' + i), diff)
+			mask = read_image(osp.join(data_root, 'mask', i), 1)
+			cv.imwrite(os.path.join(output_dir, 'diff_' + i), cv.subtract(mask.astype(np.uint8), diff))
+			#cv.imwrite(os.path.join(output_dir, 'diff_' + i), diff)
 			ret, thresh = cv.threshold((255 - diff), 127.5, 255, 0)
 			M = cv.moments(thresh)
 			if (M["m00"] == 0):
