@@ -3,6 +3,7 @@ import os.path as osp
 import cv2 as cv
 import numpy as np
 import tensorflow as tf
+import imutils
 
 from skimage.metrics import structural_similarity as compare_ssim
 
@@ -61,8 +62,6 @@ def test():
 		mask_batch  = np.zeros((1, 256, 256, 1), dtype=np.float)
 
 		for i in image_list:
-			print(i)
-
 			image_batch[0] = read_image(osp.join(data_root, 'noshadow', i), 3)
 			mask_batch[0]  = 0 - read_image(osp.join(data_root, 'mask', i), 1)
 
@@ -74,28 +73,50 @@ def test():
 			object_attention = (attention[0, :, :, 0] * 255.0).astype(np.uint8)
 			shadow_attention = (attention[0, :, :, 1] * 255.0).astype(np.uint8)
 
-			cv.imwrite(os.path.join(output_dir, i), image[0])
-			cv.imwrite(os.path.join(output_dir, 'object_' + i), object_attention)
-			cv.imwrite(os.path.join(output_dir, 'shadow_' + i), shadow_attention)
+			cv.imwrite(osp.join(output_dir, i), image[0])
+			cv.imwrite(osp.join(output_dir, 'object_' + i), object_attention)
+			cv.imwrite(osp.join(output_dir, 'shadow_' + i), shadow_attention)
 
 			# custom code
+			mask = read_image(osp.join(data_root, 'mask', i), 1)
 			g1 = cv.cvtColor(image[0], cv.COLOR_BGR2GRAY)
 			g2 = cv.cvtColor(((1.0 + image_batch) * 127.5).astype(np.uint8)[0], cv.COLOR_BGR2GRAY)
-			(score, diff) = compare_ssim(g1, g2, full=True)
-			diff = (diff * 255).astype("uint8")
-			print("SSIM for image {}: {}".format(i, score))
-			#cv.fastNlMeansDenoising(diff, diff, 42)
-			mask = read_image(osp.join(data_root, 'mask', i), 1)
-			cv.imwrite(os.path.join(output_dir, 'diff_' + i), cv.subtract(mask.astype(np.uint8), diff))
-			#cv.imwrite(os.path.join(output_dir, 'diff_' + i), diff)
-			ret, thresh = cv.threshold((255 - diff), 127.5, 255, 0)
-			M = cv.moments(thresh)
-			if (M["m00"] == 0):
-				x = int(M["m10"])
-				y = int(M["m01"])
-			else:
+			score, diff = compare_ssim(g1, g2, full=True)
+			diff = (diff * 255).astype(np.uint8)
+			#print("SSIM for image {}: {}".format(i, score))
+			diff = cv.subtract(mask.astype(np.uint8), diff)
+			#diff = cv.GaussianBlur(diff, (7, 7), 0)
+			#cv.fastNlMeansDenoising(diff, diff, 70)
+			#ret, diff = cv.threshold(diff, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+			ret, obj = cv.threshold(object_attention, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+			ret, sha = cv.threshold(shadow_attention, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+			diff = cv.subtract(diff, obj.astype(np.uint8))
+			diff = cv.subtract(diff, sha.astype(np.uint8))
+			ret, otsu = cv.threshold(diff, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+			cnts = cv.findContours(otsu, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+			cnts = imutils.grab_contours(cnts)
+			diff = cv.cvtColor(diff, cv.COLOR_GRAY2RGB)
+			greatest = 0
+			cnt = None
+			for c in cnts:
+				cv.drawContours(diff, [c], -1, (0, 255, 0), 1) # desenha o contorno (linha) detectado na imagem original
+				dm = np.zeros(otsu.shape, np.uint8)            # cria imagem vazia com o mesmo tamanho e mesma quantidade de canais que 'otsu'
+				cv.drawContours(dm, [c], -1, 255, -1)          # desenha o contorno (area) detectado na nova imagem vazia
+				#area = cv.contourArea(c)
+				mean = cv.mean(diff, mask = dm)                # adquire a intensidade media dos pixels dentro do contorno desenhado
+				if (mean[0] > greatest):                       # guarda o contorno com maior intensidade media
+					greatest = mean[0]
+					cnt = c
+			if (cnt is not None):                              # se foi encontrado ao menos 1 contorno, desenha um circulo vermelho no centro
+				M = cv.moments(cnt)
 				x = int(M["m10"] / M["m00"])
 				y = int(M["m01"] / M["m00"])
+				cv.circle(diff, (x, y), 3, (0, 0, 255), -1)
+			else:                                              # se nao foi encontrado nenhum contorno, nao desenha nada e anota x e y como negativos (erro)
+				x = -1
+				y = -1
+			cv.imwrite(osp.join(output_dir, 'contours_' + i), diff)
+			print(i)
 			print(x, y)
 
 
