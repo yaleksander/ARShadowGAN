@@ -102,15 +102,44 @@ def test():
 				cv.drawContours(diff, [c], -1, (0, 255, 0), 1) # desenha o contorno (linha) detectado na imagem original
 				dm = np.zeros(otsu.shape, np.uint8)            # cria imagem vazia com o mesmo tamanho e mesma quantidade de canais que 'otsu'
 				cv.drawContours(dm, [c], -1, 255, -1)          # desenha o contorno (area) detectado na nova imagem vazia
-				#area = cv.contourArea(c)
-				mean = cv.mean(diff, mask = dm)                # adquire a intensidade media dos pixels dentro do contorno desenhado
-				if (mean[0] > greatest):                       # guarda o contorno com maior intensidade media
-					greatest = mean[0]
+				#mean = cv.mean(diff, mask = dm)[0]             # adquire a intensidade media dos pixels dentro do contorno desenhado
+				area = cv.contourArea(c)
+				mean = cv.mean(diff, mask = dm)[0] * area      # adquire a soma da intensidade dos pixels dentro do contorno desenhado
+				if (mean > greatest):                          # guarda o contorno com maior intensidade media
+					greatest = mean
 					cnt = c
 			if (cnt is not None):                              # se foi encontrado ao menos 1 contorno, desenha um circulo vermelho no centro
-				M = cv.moments(cnt)
-				x = int(M["m10"] / M["m00"])
-				y = int(M["m01"] / M["m00"])
+				#M = cv.moments(cnt)
+				#x = int(M["m10"] / M["m00"])
+				#y = int(M["m01"] / M["m00"])
+				#cv.circle(diff, (x, y), 3, (0, 0, 255), -1)
+				mask = 255 - read_image(osp.join(data_root, 'mask', i), 1).astype(np.uint8)
+				ret, m = cv.threshold(mask, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+				cm = cv.findContours(m, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+				cm = imutils.grab_contours(cm)
+
+				dm = np.zeros(otsu.shape, np.uint8)
+				cv.drawContours(dm, cnt, -1, 255, 1)
+				cv.drawContours(dm, cm, -1, 0, 3)
+				x = 0
+				y = 0
+				p = 0
+				for j in range(0, dm.shape[0] - 1):
+					for k in range(0, dm.shape[1] - 1):
+						if (dm[j, k] == 255):
+							p += 1
+							x += j
+							y += k
+				if (p == 0):
+					x = -1
+					y = -1
+				else:
+					aux = x // p
+					x = y // p
+					y = aux
+
+				#print (x, y)
+				cv.drawContours(diff, cm, -1, (255, 0, 0), 5)
 				cv.circle(diff, (x, y), 3, (0, 0, 255), -1)
 			else:                                              # se nao foi encontrado nenhum contorno, nao desenha nada e anota x e y como negativos (erro)
 				x = -1
