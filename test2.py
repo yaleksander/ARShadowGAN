@@ -145,7 +145,7 @@ def test():
 			else:                                              # se nao foi encontrado nenhum contorno, nao desenha nada e anota x e y como negativos (erro)
 				x = -1
 				y = -1
-			s = str(x) + " " str(y) + " "
+			s = str(x) + " " + str(y) + " "
 			for j in range(256):
 				for k in range(256):
 					if (diff[k, j, 0] == 0 and diff[k, j, 1] == 255 and diff[k, j, 2] == 0):
