@@ -99,7 +99,7 @@ def test():
 			greatest = 0
 			cnt = None
 			for c in cnts:
-				cv.drawContours(diff, [c], -1, (0, 255, 0), 1) # desenha o contorno (linha) detectado na imagem original
+				cv.drawContours(diff, [c], -1, (255, 0, 0), 1) # desenha o contorno (linha) detectado na imagem original
 				dm = np.zeros(otsu.shape, np.uint8)            # cria imagem vazia com o mesmo tamanho e mesma quantidade de canais que 'otsu'
 				cv.drawContours(dm, [c], -1, 255, -1)          # desenha o contorno (area) detectado na nova imagem vazia
 				#mean = cv.mean(diff, mask = dm)[0]             # adquire a intensidade media dos pixels dentro do contorno desenhado
@@ -113,6 +113,7 @@ def test():
 				#x = int(M["m10"] / M["m00"])
 				#y = int(M["m01"] / M["m00"])
 				#cv.circle(diff, (x, y), 3, (0, 0, 255), -1)
+				cv.drawContours(diff, [cnt], -1, (0, 255, 0), 1)
 				mask = 255 - read_image(osp.join(data_root, 'mask', i), 1).astype(np.uint8)
 				ret, m = cv.threshold(mask, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
 				cm = cv.findContours(m, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
@@ -120,7 +121,7 @@ def test():
 
 				dm = np.zeros(otsu.shape, np.uint8)
 				cv.drawContours(dm, cnt, -1, 255, 1)
-				cv.drawContours(dm, cm, -1, 0, 3)
+				#cv.drawContours(dm, cm, -1, 0, 3)
 				x = 0
 				y = 0
 				p = 0
@@ -139,11 +140,17 @@ def test():
 					y = aux
 
 				#print (x, y)
-				cv.drawContours(diff, cm, -1, (255, 0, 0), 5)
+				#cv.drawContours(diff, cm, -1, (255, 0, 0), 5)
 				cv.circle(diff, (x, y), 3, (0, 0, 255), -1)
 			else:                                              # se nao foi encontrado nenhum contorno, nao desenha nada e anota x e y como negativos (erro)
 				x = -1
 				y = -1
+			s = str(x) + " " str(y) + " "
+			for j in range(256):
+				for k in range(256):
+					if (diff[k, j, 0] == 0 and diff[k, j, 1] == 255 and diff[k, j, 2] == 0):
+						s += str(j) + " " + str(k) + " "
+			print(s)
 			cv.imwrite(osp.join(output_dir, 'contours_' + i), diff)
 			print(i)
 			print(x, y)
