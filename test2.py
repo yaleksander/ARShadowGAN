@@ -113,7 +113,9 @@ def test():
 				#x = int(M["m10"] / M["m00"])
 				#y = int(M["m01"] / M["m00"])
 				#cv.circle(diff, (x, y), 3, (0, 0, 255), -1)
+				cp = diff.copy()
 				cv.drawContours(diff, [cnt], -1, (0, 255, 0), 1)
+				cv.drawContours(cp, [cnt], -1, (0, 255, 0), -1)
 				mask = 255 - read_image(osp.join(data_root, 'mask', i), 1).astype(np.uint8)
 				ret, m = cv.threshold(mask, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
 				cm = cv.findContours(m, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
@@ -148,7 +150,7 @@ def test():
 			s = str(x) + " " + str(y) + " "
 			for j in range(256):
 				for k in range(256):
-					if (diff[k, j, 0] == 0 and diff[k, j, 1] == 255 and diff[k, j, 2] == 0):
+					if (cp[k, j, 0] == 0 and cp[k, j, 1] == 255 and cp[k, j, 2] == 0):
 						s += str(j) + " " + str(k) + " "
 			print(s)
 			cv.imwrite(osp.join(output_dir, 'contours_' + i), diff)
