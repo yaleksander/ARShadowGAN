@@ -18,12 +18,13 @@ output_dir = 'output'
 
 
 def read_image(image_path, channels):
+	image = cv.imread(image_path, cv.IMREAD_COLOR)
 	if channels == 3:
 		image = cv.imread(image_path, cv.IMREAD_COLOR)
 	else:
 		image = cv.imread(image_path, cv.IMREAD_GRAYSCALE)
-		image = np.expand_dims(image, axis=2)
-	image = image.astype(np.float) / 127.5 - 1.0
+		image = np.expand_dims(image, 2)
+	image = image.astype(np.float32) / 127.5 - 1.0
 	return image
 
 
@@ -39,6 +40,8 @@ def test():
 
 	if not osp.exists(output_dir):
 		os.makedirs(output_dir)
+
+	file = open(osp.join(output_dir, "contours.txt"), "w") # custom code
 
 	config = tf.compat.v1.ConfigProto()
 	config.gpu_options.allow_growth = True
@@ -58,8 +61,8 @@ def test():
 		output_image     = sess.graph.get_tensor_by_name(node_names['output_image'])
 
 		image_list  = sorted(os.listdir(osp.join(data_root, 'noshadow')))
-		image_batch = np.zeros((1, 256, 256, 3), dtype=np.float)
-		mask_batch  = np.zeros((1, 256, 256, 1), dtype=np.float)
+		image_batch = np.zeros((1, 256, 256, 3))
+		mask_batch  = np.zeros((1, 256, 256, 1))
 
 		for i in image_list:
 			image_batch[0] = read_image(osp.join(data_root, 'noshadow', i), 3)
@@ -152,10 +155,9 @@ def test():
 				for k in range(256):
 					if (cp[k, j, 0] == 0 and cp[k, j, 1] == 255 and cp[k, j, 2] == 0):
 						s += str(j) + " " + str(k) + " "
-			print(s)
+			file.write(s[:-1] + "\n")
 			cv.imwrite(osp.join(output_dir, 'contours_' + i), diff)
-			print(i)
-			print(x, y)
+	file.close()
 
 
 if __name__ == '__main__':
